@@ -33,13 +33,9 @@ public class MoveAction : BaseAction
         if (Vector3.Distance(transform.position, targetPosition) > stoppingDistance)
         {
             transform.position += moveDirection * unitSpeed * Time.deltaTime;
-
-
-            //unitAnimator.SetFloat("Speed", unitSpeed);
         }
         else
         {
-            //unitAnimator.SetFloat("Speed", 0);
             currentPositionIndex++;
             if (currentPositionIndex >= positionList.Count)
             {
@@ -121,45 +117,15 @@ public class MoveAction : BaseAction
         return "Move";
     }
 
-    /*public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
-    {
-        int targetCountAtGridPosition = unit.GetAction<ShootAction>().GetTargetCountAtPosition(gridPosition);
-
-        return new EnemyAIAction
-        {
-            gridPosition = gridPosition,
-            actionValue = targetCountAtGridPosition * 10,
-        };
-    }*/
-
     public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
     {
-        Unit playerUnit = GetUnit();
-        int actionValue = 0;
-
-        if (playerUnit != null)
-        {
-            GridPosition playerPosition = playerUnit.GetGridPosition();
-            // Calculate Manhattan distance to player
-            int distanceToPlayer = Mathf.Abs(gridPosition.x - playerPosition.x) + Mathf.Abs(gridPosition.z - playerPosition.z);
-            actionValue = 100 - distanceToPlayer; // Higher value for closer positions
-
-            // Optional: Add shooting opportunity bonus
-            int targetCountAtGridPosition = unit.GetAction<ShootAction>().GetTargetCountAtPosition(gridPosition);
-            actionValue += targetCountAtGridPosition * 10; // Boost for shooting opportunities
-        }
-        else
-        {
-            Debug.LogWarning("Player unit not found, using default action value");
-        }
-
-        // Add randomness to break ties
-        actionValue += UnityEngine.Random.Range(0, 5);
+        //int targetCountAtGridPosition = unit.GetAction<ShootAction>().GetTargetCountAtPosition(gridPosition);
 
         return new EnemyAIAction
         {
             gridPosition = gridPosition,
-            actionValue = actionValue,
+            //actionValue = targetCountAtGridPosition * 10,
+            actionValue = 0,//handled in EnemyAI
         };
     }
 }

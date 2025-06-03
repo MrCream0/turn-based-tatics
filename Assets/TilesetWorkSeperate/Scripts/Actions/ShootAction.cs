@@ -174,7 +174,6 @@ public class ShootAction : BaseAction
         return validGridPositionList;
     }
 
-
     public override void TakeAction(GridPosition gridPosition, Action onActionComplete)
     {
         targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(gridPosition);
@@ -199,12 +198,12 @@ public class ShootAction : BaseAction
 
     public override EnemyAIAction GetEnemyAIAction(GridPosition gridPosition)
     {
-        Unit targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(gridPosition);
+        //Unit targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(gridPosition);
 
         return new EnemyAIAction
         {
             gridPosition = gridPosition,
-            actionValue = 100 + Mathf.RoundToInt((1 - targetUnit.GetHealth()) * 100f),
+            actionValue = 0,//100 + Mathf.RoundToInt((1 - targetUnit.GetHealth()) * 100f),
         };
     }
 

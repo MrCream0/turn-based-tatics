@@ -23,7 +23,7 @@ public abstract class BaseAction : MonoBehaviour
 
     public virtual bool IsValidActionGridPosition(GridPosition gridPosition)
     {
-        List<GridPosition> validGridPositionList = GetValidActionGridPositionList();
+        List<GridPosition> validGridPositionList = GetValidActionGridPositionList();//May break when moving outside of validation Check
         return validGridPositionList.Contains(gridPosition);
     }
 
@@ -55,7 +55,7 @@ public abstract class BaseAction : MonoBehaviour
         return unit;
     }
 
-    public EnemyAIAction GetBestEnemyAIAction()
+    /*public EnemyAIAction GetBestEnemyAIAction()
     {
         List<EnemyAIAction> enemyAIActionList = new List<EnemyAIAction>();
 
@@ -77,6 +77,21 @@ public abstract class BaseAction : MonoBehaviour
             //no actions
             return null;
         }
+    }*/ // moved to enemy ai logic
+
+    public virtual EnemyAIAction GetBestEnemyAIAction()
+    {
+        // Simplified: AI logic moved to EnemyAI
+        List<GridPosition> validPositions = GetValidActionGridPositionList();
+        if (validPositions.Count == 0)
+        {
+            return null;
+        }
+        return new EnemyAIAction
+        {
+            gridPosition = validPositions[0], // Default to first valid position
+            actionValue = 0 // Scoring handled in EnemyAI
+        };
     }
 
     public abstract EnemyAIAction GetEnemyAIAction(GridPosition gridPosition);
