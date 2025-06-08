@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    private const int ACTION_POINTS_MAX = 2;
+    private const int ACTION_POINTS_MAX = 9;
 
     public static event EventHandler OnAnyActionPointsChanged;
     public static event EventHandler OnAnyUnitSpawned;
@@ -14,10 +14,22 @@ public class Unit : MonoBehaviour
 
     [SerializeField] private bool isEnemy;
 
+    [SerializeField] private EnemyPersonality enemyPersonality;
+
     private GridPosition gridPosition;
     private HealthSystem healthSystem;
     private BaseAction[] baseActionArray;
     private int actionPoints = ACTION_POINTS_MAX;
+    private void Awake()
+    {
+        healthSystem = GetComponent<HealthSystem>();
+        baseActionArray = GetComponents<BaseAction>();
+        if (isEnemy && enemyPersonality == null)
+        {
+            enemyPersonality = new EnemyPersonality();
+        }
+    }
+
     private void Start()
     {
         gridPosition = LevelGrid.Instance.GetGridPosition(transform.position);
@@ -30,11 +42,6 @@ public class Unit : MonoBehaviour
         OnAnyUnitSpawned?.Invoke(this, EventArgs.Empty);
     }
 
-    private void Awake()
-    {
-        healthSystem = GetComponent<HealthSystem>();
-        baseActionArray = GetComponents<BaseAction>();
-    }
 
     private void Update()
     {
@@ -57,6 +64,11 @@ public class Unit : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public EnemyPersonality GetEnemyPersonality()
+    {
+        return enemyPersonality;
     }
 
     public GridPosition GetGridPosition()

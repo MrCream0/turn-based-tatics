@@ -171,6 +171,9 @@ public class GridSystemVisual : MonoBehaviour
                 gridVisualType = GridVisualType.Red;
                 ShowGridPositionRangeSquare(selectedUnit.GetGridPosition(), swordAction.GetMaxSwordRange(), GridVisualType.RedSoft);
                 break;
+            case InteractAction interactAction:
+                gridVisualType = GridVisualType.Blue;
+                break;
 
         }
         ShowGridPositionList(selectedAction.GetValidActionGridPositionList(), gridVisualType);

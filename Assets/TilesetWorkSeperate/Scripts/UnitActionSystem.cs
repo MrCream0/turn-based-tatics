@@ -64,7 +64,7 @@ public class UnitActionSystem : MonoBehaviour
 
     private void HandleSelectedAction()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (InputManager.Instance.IsMouseButtonDownThisFrame())
         {
             GridPosition mouseGridPosition = LevelGrid.Instance.GetGridPosition(MouseWorld.GetPosition());
 
@@ -100,22 +100,25 @@ public class UnitActionSystem : MonoBehaviour
 
     private bool TryHandleUnitSelection()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (InputManager.Instance.IsMouseButtonDownThisFrame())
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit rayCastHit, float.MaxValue, unitLayerMask))
+            Ray ray = Camera.main.ScreenPointToRay(InputManager.Instance.GetMouseScreenPosition());
+            if (Physics.Raycast(ray, out RaycastHit raycastHit, float.MaxValue, unitLayerMask))
             {
-                if (rayCastHit.transform.TryGetComponent<Unit>(out Unit unit))
-                { 
+                if (raycastHit.transform.TryGetComponent<Unit>(out Unit unit))
+                {
                     if (unit == selectedUnit)
                     {
+                        // Unit is already selected
                         return false;
                     }
 
                     if (unit.IsEnemy())
                     {
+                        // Clicked on an Enemy
                         return false;
                     }
+
                     SetSelectedUnit(unit);
                     return true;
                 }
@@ -123,6 +126,7 @@ public class UnitActionSystem : MonoBehaviour
         }
 
         return false;
+
     }
 
     private void SetSelectedUnit(Unit unit)

@@ -130,6 +130,7 @@ public class EnemyAI : MonoBehaviour
     private bool TryTakeEnemyAIAction(Unit enemyUnit, Action onEnemyAIActionComplete)
     {
         List<(BaseAction action, EnemyAIAction aiAction)> actionList = new List<(BaseAction, EnemyAIAction)>();
+        EnemyPersonality personality = enemyUnit.GetEnemyPersonality();
 
         // Evaluate all possible actions
         foreach (BaseAction baseAction in enemyUnit.GetBaseActionArray())
@@ -141,11 +142,11 @@ public class EnemyAI : MonoBehaviour
 
             if (baseAction is MoveAction moveAction)
             {
-                actionList.AddRange(EvaluateMoveAction(enemyUnit, moveAction));
+                actionList.AddRange(EvaluateMoveAction(enemyUnit, moveAction, personality));
             }
             else if (baseAction is ShootAction shootAction)
             {
-                EnemyAIAction shootAIAction = EvaluateShootAction(enemyUnit, shootAction);
+                EnemyAIAction shootAIAction = EvaluateShootAction(enemyUnit, shootAction, personality);
                 if (shootAIAction != null)
                 {
                     actionList.Add((shootAction, shootAIAction));
@@ -174,10 +175,11 @@ public class EnemyAI : MonoBehaviour
         return false;
     }
 
-    private List<(BaseAction, EnemyAIAction)> EvaluateMoveAction(Unit unit, MoveAction moveAction)
+    private List<(BaseAction, EnemyAIAction)> EvaluateMoveAction(Unit unit, MoveAction moveAction, EnemyPersonality personality)
     {
         List<(BaseAction, EnemyAIAction)> moveActions = new List<(BaseAction, EnemyAIAction)>();
         List<GridPosition> validMovePositions = moveAction.GetValidActionGridPositionList();
+        GridPosition unitPos = unit.GetGridPosition();
 
         foreach (GridPosition movePos in validMovePositions)
         {
@@ -187,27 +189,26 @@ public class EnemyAI : MonoBehaviour
             Unit nearestPlayer = GetNearestPlayerUnit(movePos);
             if (nearestPlayer != null)
             {
-                float distance = Vector3.Distance(
-                    LevelGrid.Instance.GetWorldPosition(movePos),
-                    LevelGrid.Instance.GetWorldPosition(nearestPlayer.GetGridPosition())
-                );
-                moveValue += Mathf.RoundToInt((10f - distance) * 5f); // Closer is better
+                int pathLength = Pathfinding.Instance.GetPathLength(unitPos, nearestPlayer.GetGridPosition());
+                int movePathLength = Pathfinding.Instance.GetPathLength(movePos, nearestPlayer.GetGridPosition());
+                // Reward moves that reduce path length to player
+                moveValue += Mathf.RoundToInt((pathLength - movePathLength) * 5f * personality.aggressionWeight);
             }
 
             // Bonus for cover
             if (IsTileInCover(movePos))
             {
-                moveValue += 15;
+                moveValue += Mathf.RoundToInt(15 * personality.coverWeight);
             }
 
             // Penalty for clustering
             if (IsTileNearOtherEnemies(unit, movePos))
             {
-                moveValue -= 10;
+                moveValue -= Mathf.RoundToInt(10 * personality.clusteringPenalty);
             }
 
             // Random factor
-            moveValue += UnityEngine.Random.Range(0, 5);
+            moveValue += Mathf.RoundToInt(UnityEngine.Random.Range(0, 5) * personality.randomnessWeight);
 
             moveActions.Add((moveAction, new EnemyAIAction
             {
@@ -219,7 +220,7 @@ public class EnemyAI : MonoBehaviour
         return moveActions;
     }
 
-    private EnemyAIAction EvaluateShootAction(Unit unit, ShootAction shootAction)
+    private EnemyAIAction EvaluateShootAction(Unit unit, ShootAction shootAction, EnemyPersonality personality)
     {
         GridPosition currentPos = unit.GetGridPosition();
         List<GridPosition> validShootPositions = shootAction.GetValidActionGridPositionList(currentPos);
@@ -236,7 +237,7 @@ public class EnemyAI : MonoBehaviour
             Unit targetUnit = LevelGrid.Instance.GetUnitAtGridPosition(shootPos);
             if (targetUnit == null) continue;
 
-            int shootValue = 100 + Mathf.RoundToInt((1 - targetUnit.GetHealth()) * 100f);
+            int shootValue = Mathf.RoundToInt((100 + (1 - targetUnit.GetHealth()) * 100f) * personality.aggressionWeight);
             if (shootValue > bestShootValue)
             {
                 bestShootValue = shootValue;

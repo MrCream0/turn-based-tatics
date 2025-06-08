@@ -9,6 +9,9 @@ public class UnitAnimator : MonoBehaviour
     [SerializeField] Transform projectilePrefab;
     [SerializeField] Transform projectilePointTransform;
 
+    [SerializeField] Transform meleeWeaponTransform;
+    [SerializeField] Transform rangedWeaponTransform;
+
     //Temp float for anim speed
     [SerializeField] float unitSpeed = 5f;
 
@@ -24,6 +27,29 @@ public class UnitAnimator : MonoBehaviour
         {
             shootAction.OnShoot += ShootAction_OnShoot;
         }
+
+        if (TryGetComponent<SwordAction>(out SwordAction swordAction))
+        {
+            swordAction.OnSwordStarted += SwordAction_OnSwordStarted;
+            swordAction.OnSwordCompleted += SwordAction_OnSwordCompleted;
+        }
+    }
+
+    private void Start()
+    {
+        UnEquipWeapon();
+    }
+
+    private void SwordAction_OnSwordCompleted(object sender, EventArgs e)
+    {
+        UnEquipWeapon();
+        animator.ResetTrigger("SwordAttack");
+    }
+
+    private void SwordAction_OnSwordStarted(object sender, EventArgs e)
+    {
+        EquipMelee();
+        animator.SetTrigger("SwordAttack");
     }
 
     private void MoveAction_OnStartMoving(object sender, EventArgs e)
@@ -37,6 +63,7 @@ public class UnitAnimator : MonoBehaviour
 
     private void ShootAction_OnShoot(object ender, ShootAction.OnShootEventArgs e)
     {
+        EquipRanged();
         animator.SetTrigger("Cast");
 
         Transform projectileTransform = Instantiate(projectilePrefab, projectilePointTransform.position, Quaternion.identity);
@@ -46,5 +73,24 @@ public class UnitAnimator : MonoBehaviour
 
         targetUnitShootPosition.y = projectilePointTransform.position.y;
         spellProjectile.Setup(targetUnitShootPosition);
+        UnEquipWeapon();
+    }
+
+    private void EquipMelee()
+    {
+        meleeWeaponTransform.gameObject.SetActive(true);
+        rangedWeaponTransform.gameObject.SetActive(false);
+    }
+
+    private void EquipRanged()
+    {
+        rangedWeaponTransform.gameObject.SetActive(true);
+        meleeWeaponTransform.gameObject.SetActive(false);
+    }
+
+    private void UnEquipWeapon()
+    {
+        rangedWeaponTransform.gameObject.SetActive(false);
+        meleeWeaponTransform.gameObject.SetActive(false);
     }
 }
