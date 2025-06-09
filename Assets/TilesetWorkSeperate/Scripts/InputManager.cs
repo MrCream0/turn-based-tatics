@@ -1,4 +1,5 @@
 #define USE_NEW_INPUT_SYSTEM
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,8 +9,12 @@ public class InputManager : MonoBehaviour
 {
 
     public static InputManager Instance { get; private set; }
+    public Action OnInteractPerformed { get; internal set; }
 
     private PlayerInputActions playerInputActions;
+
+    public delegate void MoveAction(Vector2 moveVector);
+    public event MoveAction OnMovePerformed;
 
     private void Awake()
     {
@@ -23,6 +28,12 @@ public class InputManager : MonoBehaviour
 
         playerInputActions = new PlayerInputActions();
         playerInputActions.Player.Enable();
+    }
+
+    private void Update()
+    {
+        Vector2 moveInput = playerInputActions.ThirdPersonPlayer.ThirdPersonMovement.ReadValue<Vector2>();
+        if (moveInput != Vector2.zero) OnMovePerformed?.Invoke(moveInput);
     }
 
 
