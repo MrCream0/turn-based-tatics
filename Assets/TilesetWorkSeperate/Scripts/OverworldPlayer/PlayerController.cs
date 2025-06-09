@@ -96,14 +96,4 @@ public class PlayerController : MonoBehaviour
             motor.Jump(jumpVelocity);
         }
     }
-
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Enemy"))
-        {
-            Vector3 center = transform.position; // Or average between player/enemy
-            //GameManager.Instance.StartTileCombat(center);
-        }
-    }
-    
 }

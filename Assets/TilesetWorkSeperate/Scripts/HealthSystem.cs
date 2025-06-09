@@ -11,6 +11,8 @@ public class HealthSystem : MonoBehaviour
     [SerializeField] private float currentHealth = 100.0f;
     [SerializeField] private float maxHealth;
 
+    [SerializeField] private bool isEnemy;
+
     private void Awake()
     {
         maxHealth = currentHealth;
@@ -27,7 +29,12 @@ public class HealthSystem : MonoBehaviour
 
         OnDamaged?.Invoke(this, EventArgs.Empty);
 
-        if (currentHealth == 0f)
+        if (currentHealth == 0f && isEnemy)
+        {
+            Die();
+            GameManager.Instance.EndCombat(true);
+        }
+        else if(currentHealth == 0f && !isEnemy)
         {
             Die();
         }

@@ -3,12 +3,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.IO;
 using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     private PlayerSaveData saveData = new PlayerSaveData();
     private string saveFilePath;
+    private int currentEnemyId; // Track the current enemy for combat
 
     private void Awake()
     {
@@ -24,7 +26,7 @@ public class GameManager : MonoBehaviour
         saveFilePath = Application.persistentDataPath + "/savegame.sav";
     }
 
-    public void StartCombat(string combatSceneName)
+    public void StartCombat(string combatSceneName, int enemyId)
     {
         PlayerController player = FindObjectOfType<PlayerController>();
         if (player != null)
@@ -34,13 +36,23 @@ public class GameManager : MonoBehaviour
             saveData.playerOverworldPosition[2] = player.transform.position.z;
         }
         saveData.currentScene = combatSceneName;
-        SceneManager.LoadScene(combatSceneName);
+        currentEnemyId = enemyId; // Store enemy ID for this combat
+        StartCoroutine(LoadSceneAsync(combatSceneName, isCombat: true));
     }
 
-    public void EndCombat()
+    public void EndCombat(bool victory)
     {
+        if (victory)
+        {
+            // Mark enemy as defeated
+            if (!saveData.defeatedEnemyIds.Contains(currentEnemyId))
+            {
+                saveData.defeatedEnemyIds.Add(currentEnemyId);
+            }
+            SaveGame(); // Save the defeated state
+        }
         saveData.currentScene = "Overworld";
-        SceneManager.LoadScene("Overworld");
+        StartCoroutine(LoadSceneAsync("Overworld", isCombat: false));
     }
 
     public void SaveGame()
@@ -53,7 +65,7 @@ public class GameManager : MonoBehaviour
             saveData.playerOverworldPosition[2] = player.transform.position.z;
         }
         saveData.currentScene = SceneManager.GetActiveScene().name;
-        saveData.playerXP = 100; // Update with actual XP from PlayerController
+        saveData.playerXP = 100; // Update with actual XP
 
         string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(saveFilePath, json);
@@ -64,9 +76,17 @@ public class GameManager : MonoBehaviour
     {
         if (File.Exists(saveFilePath))
         {
-            string json = File.ReadAllText(saveFilePath);
-            saveData = JsonUtility.FromJson<PlayerSaveData>(json);
-            StartCoroutine(LoadSceneAsync(saveData.currentScene));
+            try
+            {
+                string json = File.ReadAllText(saveFilePath);
+                saveData = JsonUtility.FromJson<PlayerSaveData>(json);
+                bool isCombat = saveData.currentScene != "Overworld";
+                StartCoroutine(LoadSceneAsync(saveData.currentScene, isCombat));
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("Failed to load save file: " + e.Message);
+            }
         }
         else
         {
@@ -74,27 +94,38 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadSceneAsync(string sceneName)
+    private IEnumerator LoadSceneAsync(string sceneName, bool isCombat)
     {
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName);
         while (!asyncLoad.isDone)
         {
             yield return null;
         }
-        Debug.Log("Game loaded from " + saveFilePath);
+        if (isCombat)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+            Debug.Log("Combat scene loaded, cursor set to visible/unlocked");
+        }
+        else
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            Debug.Log("Overworld scene loaded, cursor set to hidden/locked");
+        }
     }
 
     public void NewGame()
     {
         saveData = new PlayerSaveData
         {
-            playerOverworldPosition = new float[] { 10f, 0f, 10f }, // Default spawn point
-            playerXP = 0, // Starting XP
-            currentScene = "Overworld"
-            // Initialize other fields as needed
+            playerOverworldPosition = new float[] { 10f, 0f, 10f },
+            playerXP = 0,
+            currentScene = "Overworld",
+            defeatedEnemyIds = new List<int>()
         };
-        StartCoroutine(LoadSceneAsync("Overworld"));
-        SaveGame(); // Save the new game state
+        StartCoroutine(LoadSceneAsync("Overworld", isCombat: false));
+        SaveGame();
         Debug.Log("New game started");
     }
 
