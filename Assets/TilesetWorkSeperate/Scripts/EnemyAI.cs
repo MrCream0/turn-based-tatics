@@ -47,7 +47,6 @@ public class EnemyAI : MonoBehaviour
                     }
                     else
                     {
-                        // No more enemies have actions they can take, end enemy turn
                         TurnSystem.Instance.NextTurn();
                     }
                 }
@@ -155,7 +154,6 @@ public class EnemyAI : MonoBehaviour
             // Add other actions (e.g., GrenadeAction) here
         }
 
-        // Select the best action
         if (actionList.Count == 0)
         {
             return false;
@@ -185,29 +183,28 @@ public class EnemyAI : MonoBehaviour
         {
             int moveValue = 0;
 
-            // Distance to nearest player
             Unit nearestPlayer = GetNearestPlayerUnit(movePos);
             if (nearestPlayer != null)
             {
                 int pathLength = Pathfinding.Instance.GetPathLength(unitPos, nearestPlayer.GetGridPosition());
                 int movePathLength = Pathfinding.Instance.GetPathLength(movePos, nearestPlayer.GetGridPosition());
-                // Reward moves that reduce path length to player
+
                 moveValue += Mathf.RoundToInt((pathLength - movePathLength) * 5f * personality.aggressionWeight);
             }
 
-            // Bonus for cover
+
             if (IsTileInCover(movePos))
             {
                 moveValue += Mathf.RoundToInt(15 * personality.coverWeight);
             }
 
-            // Penalty for clustering
+
             if (IsTileNearOtherEnemies(unit, movePos))
             {
                 moveValue -= Mathf.RoundToInt(10 * personality.clusteringPenalty);
             }
 
-            // Random factor
+
             moveValue += Mathf.RoundToInt(UnityEngine.Random.Range(0, 5) * personality.randomnessWeight);
 
             moveActions.Add((moveAction, new EnemyAIAction
@@ -229,7 +226,7 @@ public class EnemyAI : MonoBehaviour
             return null;
         }
 
-        // Find best target
+
         int bestShootValue = 0;
         GridPosition bestTargetPos = currentPos;
         foreach (GridPosition shootPos in validShootPositions)
