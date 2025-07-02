@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
 
     private bool canRoll = true;
     private bool isRolling = false;
+    private BonfireMenuController bonfireMenuController;
 
     private void Awake()
     {
@@ -35,8 +36,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        input.x = Input.GetAxis("Horizontal");
-        input.y = Input.GetAxis("Vertical");
+        input = InputManager.Instance.GetThirdPersonInput();
+        
 
         Vector3 moveDir = cam.forward * input.y + cam.right * input.x;
         moveDir.y = 0;
@@ -81,6 +82,28 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(rollCooldown);
 
         canRoll = true;
+    }
+
+    private void HandleMoveInput(Vector2 moveInput)
+    {
+        if (isRolling) return; // Ignore movement input during roll
+        input = moveInput;
+    }
+
+    private void TryRoll()
+    {
+        if (canRoll && input != Vector2.zero && !bonfireMenuController.gameObject.activeSelf)
+        {
+            Vector3 moveDir = cam.forward * input.y + cam.right * input.x;
+            moveDir.y = 0;
+            moveDir.Normalize();
+            StartCoroutine(Roll(moveDir));
+        }
+    }
+
+    private void TryInteract()
+    {
+        // 
     }
 
     public float GetSpeed()

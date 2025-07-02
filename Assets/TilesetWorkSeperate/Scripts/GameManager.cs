@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
             saveData.playerOverworldPosition[2] = player.transform.position.z;
         }
         saveData.currentScene = SceneManager.GetActiveScene().name;
-        saveData.playerXP = 100;
+        saveData.unitXP = 100;
 
         string json = JsonUtility.ToJson(saveData, true);
         File.WriteAllText(saveFilePath, json);
@@ -144,7 +144,7 @@ public class GameManager : MonoBehaviour
         saveData = new PlayerSaveData
         {
             playerOverworldPosition = new float[] { 10f, 0f, 10f },
-            playerXP = 0,
+            unitXP = 0,
             currentScene = "Overworld",
             defeatedEnemyIds = new List<int>()
         };

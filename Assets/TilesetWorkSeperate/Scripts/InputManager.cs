@@ -1,5 +1,4 @@
-// InputManager.cs
-#define USE_NEW_INPUT_SYSTEM
+ï»¿#define USE_NEW_INPUT_SYSTEM
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +6,7 @@ using UnityEngine.InputSystem;
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
-    public Action OnInteractPerformed { get; internal set; }
+    public Action OnInteractPerformed;
 
     private PlayerInputActions playerInputActions;
 
@@ -26,26 +25,45 @@ public class InputManager : MonoBehaviour
         DontDestroyOnLoad(gameObject); // Persist across scenes
 
         playerInputActions = new PlayerInputActions();
-        Debug.Log("InputManager: Initialized PlayerInputActions");
     }
 
     private void OnEnable()
     {
-        // Don’t enable input here; enable only for combat
+        if (playerInputActions != null)
+        {
+            playerInputActions.ThirdPersonPlayer.Enable();
+            // Subscribe to Interaction action
+            playerInputActions.ThirdPersonPlayer.Interaction.performed += ctx => OnInteractPerformed?.Invoke();
+        }
+        else
+        {
+            Debug.LogWarning("InputManager: PlayerInputActions is null, cannot enable input");
+        }
     }
 
     private void OnDisable()
     {
-        DisableCombatController();
-        Debug.Log("InputManager: Disabled on OnDisable");
+        if (playerInputActions != null)
+        {
+            // Unsubscribe from Interaction action
+            playerInputActions.ThirdPersonPlayer.Interaction.performed -= ctx => OnInteractPerformed?.Invoke();
+            playerInputActions.ThirdPersonPlayer.Disable();
+        }
+        else
+        {
+            Debug.LogWarning("InputManager: PlayerInputActions is null, cannot disable input");
+        }
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
         {
-            DisableCombatController();
-            playerInputActions?.Dispose();
+            if (playerInputActions != null)
+            {
+                playerInputActions.ThirdPersonPlayer.Interaction.performed -= ctx => OnInteractPerformed?.Invoke();
+                playerInputActions?.Dispose();
+            }
             Debug.Log("InputManager: Destroyed, cleaned up PlayerInputActions");
             Instance = null;
         }
@@ -56,7 +74,6 @@ public class InputManager : MonoBehaviour
         if (playerInputActions != null)
         {
             playerInputActions.Player.Enable();
-            Debug.Log("InputManager: Enabled combat input actions");
         }
         else
         {
@@ -69,7 +86,6 @@ public class InputManager : MonoBehaviour
         if (playerInputActions != null)
         {
             playerInputActions.Player.Disable();
-            Debug.Log("InputManager: Disabled combat input actions");
         }
         else
         {
@@ -79,7 +95,6 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
-        // Rename ThirdPersonMovement to CombatMovement in Input Actions asset if it’s combat-specific
         Vector2 moveInput = playerInputActions.ThirdPersonPlayer.ThirdPersonMovement.ReadValue<Vector2>();
         if (moveInput != Vector2.zero) OnMovePerformed?.Invoke(moveInput);
     }
@@ -138,5 +153,24 @@ public class InputManager : MonoBehaviour
         if (Input.mouseScrollDelta.y < 0) zoomAmount = +1f;
         return zoomAmount;
 #endif
+    }
+
+    public Vector2 GetThirdPersonInput()
+    {
+#if USE_NEW_INPUT_SYSTEM
+        Vector2 input = playerInputActions.ThirdPersonPlayer.ThirdPersonMovement.ReadValue<Vector2>();
+        return input;
+#else
+        Vector2 input;
+        input.x = Input.GetAxis("Horizontal");
+        input.y = Input.GetAxis("Vertical");
+        Debug.Log($"Old Input System: {input}");
+        return input;
+#endif
+    }
+
+    public bool GetOverworldInteract()
+    {
+        return playerInputActions.ThirdPersonPlayer.Interaction.WasPressedThisFrame();
     }
 }

@@ -5,22 +5,32 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
+    private const int ACTION_POINTS_MAX = 2;
 
-    private const int ACTION_POINTS_MAX = 9;
+    [SerializeField] private UnitClass unitClass;
+    [SerializeField] private bool isEnemy;
+    [SerializeField] private EnemyPersonality enemyPersonality;
 
     public static event EventHandler OnAnyActionPointsChanged;
     public static event EventHandler OnAnyUnitSpawned;
     public static event EventHandler OnAnyUnitDead;
 
-
-    [SerializeField] private bool isEnemy;
-
-    [SerializeField] private EnemyPersonality enemyPersonality;
-
     private GridPosition gridPosition;
     private HealthSystem healthSystem;
     private BaseAction[] baseActionArray;
     private int actionPoints = ACTION_POINTS_MAX;
+
+    private int level;
+    private float maxHealth;
+    private int strength;
+    private int agility;
+    private int intelligence;
+    private int defense;
+
+    private int experience = 0;
+    private const int XP_PER_LEVEL = 100;
+
+
     private void Awake()
     {
         healthSystem = GetComponent<HealthSystem>();
@@ -29,6 +39,9 @@ public class Unit : MonoBehaviour
         {
             enemyPersonality = new EnemyPersonality();
         }
+
+        InitialzeStats();
+
     }
 
     private void Start()
@@ -55,6 +68,66 @@ public class Unit : MonoBehaviour
         }
     }
 
+    private void InitialzeStats()
+    {
+        if (unitClass == null)
+        {
+            Debug.LogError($"Unit {gameObject.name} has not assigned UnitClass!");
+            return;
+        }
+
+        level = unitClass.level;
+
+        maxHealth = unitClass.baseMaxHealth;
+        strength = unitClass.baseStrength;
+        agility = unitClass.baseAgility;
+        intelligence = unitClass.baseIntelligence;
+        defense = unitClass.baseDefense;
+
+        healthSystem.SetMaxHealth(maxHealth);
+    }
+
+    public void GainExperience(int xpAmmount)
+    {
+        experience += xpAmmount;
+        while (experience >= XP_PER_LEVEL)
+        {
+            experience -= XP_PER_LEVEL;
+            LevelUp();
+        }
+    }
+
+    public void LevelUp()
+    {
+        level++;
+
+        if (UnityEngine.Random.value < unitClass.healthGrowth)
+        {
+            maxHealth += 1;
+        }
+        if (UnityEngine.Random.value < unitClass.strengthGrowth)
+        {
+            strength += 1;
+        }
+        if (UnityEngine.Random.value < unitClass.agilityGrowth)
+        {
+            agility += 1;
+        }
+        if (UnityEngine.Random.value < unitClass.intelligenceGrowth)
+        {
+            intelligence += 1;
+        }
+        if (UnityEngine.Random.value < unitClass.defenseGrowth)
+        {
+            defense += 1;
+        }
+
+        healthSystem.SetMaxHealth(maxHealth);
+        healthSystem.Heal(healthSystem.GetHealthNormalized() * 0.2f);
+    }
+
+    public int GetExperience() => experience;
+
     public T GetAction<T>() where T : BaseAction
     {
         foreach (BaseAction baseAction in baseActionArray)
@@ -66,6 +139,14 @@ public class Unit : MonoBehaviour
         }
         return null;
     }
+
+    /*public BaseAction[] SetBaseActions(BaseAction[] unitActions)
+    {
+        foreach (BaseAction i in unitActions)
+        {
+            
+        }
+    }*/
 
     public EnemyPersonality GetEnemyPersonality()
     {
@@ -81,7 +162,7 @@ public class Unit : MonoBehaviour
     {
         return this.transform.position;
     }
-    
+
     public BaseAction[] GetBaseActionArray()
     {
         return baseActionArray;
@@ -156,5 +237,40 @@ public class Unit : MonoBehaviour
     public float GetHealth()
     {
         return healthSystem.GetHealthNormalized();
+    } //this initialization may cause issues with new class implimentation
+
+    public float GetMaxHealth()
+    {
+        return maxHealth;
+    }
+
+    public int GetStrength()
+    {
+        return strength;
+    }
+
+    public int GetAgility()
+    {
+        return agility;
+    }
+
+    public int GetIntelligence()
+    {
+        return intelligence;
+    }
+
+    public int GetDefense()
+    {
+        return defense;
+    }
+
+    public int GetLevel()
+    {
+        return level;
+    }
+
+    public UnitClass GetUnitClass()
+    {
+        return unitClass;
     }
 }
